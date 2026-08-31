@@ -43,21 +43,32 @@ Vector Store:	ChromaDB with OpenAI embeddings
 UI	Gradio with session management
 
 ## Setup Instructions
-1. **Clone the repository**
+1. Clone the repository
+```
+git clone https://github.com/mulangph/erp-agentic-ai.git
+```
 2. Install uv
+```
 pip install uv
+```
 3. Initialize project
+```
 uv init
+```
 4. Install dependencies
+```
 uv sync
-5. Set up environment variables
-cp .env.example .env
-Edit .env with your OpenAI API key and ERP API details
+```
+5. Set up environment variables  
+cp .env.example .env  
+Edit .env with your OpenAI API key and ERP API details  
+
 6. Seed the vector store (first run will automatically seed with sample docs)
 This happens automatically when RAGAgent is first used
 7. Run the application
+```
 uv run main.py
-
+```
 
 ## Future Enhancements
 1. Search for duplicate tickets
