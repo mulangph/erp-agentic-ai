@@ -43,25 +43,19 @@ Vector Store:	ChromaDB with OpenAI embeddings
 UI	Gradio with session management
 
 ## Setup Instructions
-# 1. **Clone the repository**
-
-# 2. Install uv
+1. **Clone the repository**
+2. Install uv
 pip install uv
-
-# 3. Initialize project
+3. Initialize project
 uv init
-
-# 4. Install dependencies
+4. Install dependencies
 uv sync
-
-# 5. Set up environment variables
+5. Set up environment variables
 cp .env.example .env
-# Edit .env with your OpenAI API key and ERP API details
-
-# 6. Seed the vector store (first run will automatically seed with sample docs)
-# This happens automatically when RAGAgent is first used
-
-# 7. Run the application
+Edit .env with your OpenAI API key and ERP API details
+6. Seed the vector store (first run will automatically seed with sample docs)
+This happens automatically when RAGAgent is first used
+7. Run the application
 uv run main.py
 
 
