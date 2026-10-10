@@ -53,7 +53,7 @@ class RouterAgent(BaseAgent):
         {
             "category": "SUPPORT|ERROR|DATA_CHANGE_REQUEST",
             "confidence": 0.95,
-            "clarification_question": null or "Your clarifying question here...",
+            "clarification_question": null or "Can you provide more details?",
             "image_context": "Brief description of what the image shows"
         }
         
