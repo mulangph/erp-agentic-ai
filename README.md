@@ -5,7 +5,7 @@ A multi-agent AI assistant that automates first-line ERP helpdesk work. Users de
 ![Python](https://img.shields.io/badge/python-3.12-blue) ![LangChain](https://img.shields.io/badge/LangChain-0.3-green) ![Gradio](https://img.shields.io/badge/UI-Gradio-orange) ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 <!-- Replace with a real screenshot or GIF of the Gradio UI -->
-![Demo](test_data/image/Odoo_error.png)
+![Demo](docs/erp-support-sample.png)
 
 
 ## What it does
