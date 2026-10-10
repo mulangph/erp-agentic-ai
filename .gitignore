@@ -11,5 +11,5 @@ wheels/
 
 .env
 
-.vector_store
-.vectore_store
+vector_store/
+vectore_store/

@@ -172,122 +172,305 @@ def process_message_with_image(
             "content": final_result["final_message"]
         })
         
-        # Add mitigations
-        mitigations_text = "\n\n---\n\n" + "\n".join([
-            f"🔍 **Concern:** {m}" for m in final_result.get("mitigations", [])
-        ])
-        
+        # Add the validator's points to double-check
+        mitigations = final_result.get("mitigations", [])
+        mitigations_text = ""
+        if mitigations:
+            mitigations_text = "\n\n---\n**Before you act, check:**\n" + "\n".join(
+                f"- {m}" for m in mitigations
+            )
+
         return final_result["final_message"] + mitigations_text
         
     except Exception as e:
         logger.error(f"Error processing message: {e}", exc_info=True)
         return f"❌ I encountered an error: {str(e)}"
 
+# ═══════════════════════════════════════════════════════════
+# UI
+# ═══════════════════════════════════════════════════════════
+
+EXAMPLES_DIR = os.path.join(ROOT_DIR, "test_data", "image")
+
+THEME = gr.themes.Base(
+    primary_hue=gr.themes.colors.blue,
+    neutral_hue=gr.themes.colors.slate,
+    font=[gr.themes.GoogleFont("IBM Plex Sans"), "system-ui", "sans-serif"],
+    font_mono=[gr.themes.GoogleFont("IBM Plex Mono"), "ui-monospace", "monospace"],
+    radius_size=gr.themes.sizes.radius_md,
+).set(
+    body_background_fill="#F4F6F5",
+    body_text_color="#1C2530",
+    block_background_fill="#FFFFFF",
+    block_border_color="#DCE1E4",
+    block_border_width="1px",
+    block_shadow="none",
+    block_label_background_fill="#FFFFFF",
+    button_primary_background_fill="#1E4E79",
+    button_primary_background_fill_hover="#173D5F",
+    button_primary_text_color="#FFFFFF",
+    button_secondary_background_fill="#FFFFFF",
+    button_secondary_background_fill_hover="#EEF1F3",
+    button_secondary_border_color="#C9D0D5",
+    button_secondary_text_color="#1C2530",
+    color_accent="#1E4E79",
+    color_accent_soft="#E3ECF4",
+    input_background_fill="#FFFFFF",
+    input_border_color="#C9D0D5",
+    input_border_color_focus="#1E4E79",
+    # Dark mode equivalents
+    body_background_fill_dark="#0F151B",
+    body_text_color_dark="#E6EBEF",
+    block_background_fill_dark="#18212B",
+    block_border_color_dark="#2C3844",
+    block_label_background_fill_dark="#18212B",
+    button_primary_background_fill_dark="#2F6EA5",
+    button_primary_background_fill_hover_dark="#3A7DB8",
+    button_secondary_background_fill_dark="#18212B",
+    button_secondary_background_fill_hover_dark="#223040",
+    button_secondary_border_color_dark="#3A4754",
+    button_secondary_text_color_dark="#E6EBEF",
+    input_background_fill_dark="#121A22",
+    input_border_color_dark="#3A4754",
+    input_border_color_focus_dark="#7FB3E0",
+)
+
+CSS = """
+/* Colour tokens: light values here, dark values under .dark */
+:root {
+  --hd-ink: #1C2530;          /* headings */
+  --hd-body: #3C4752;         /* body text */
+  --hd-muted: #5B6773;        /* secondary text */
+  --hd-surface: #FFFFFF;      /* cards */
+  --hd-border: #DCE1E4;
+  --hd-control-border: #C9D0D5;
+  --hd-accent: #1E4E79;
+  --cap-support: #1E4E79;
+  --cap-error: #D99A00;
+  --cap-change: #2F7D5B;
+}
+.dark {
+  --hd-ink: #E6EBEF;
+  --hd-body: #C9D2D9;
+  --hd-muted: #9AA7B2;
+  --hd-surface: #18212B;
+  --hd-border: #2C3844;
+  --hd-control-border: #3A4754;
+  --hd-accent: #7FB3E0;
+  --cap-support: #5C9BD1;
+  --cap-error: #F2B632;
+  --cap-change: #4FB287;
+}
+
+.gradio-container { max-width: 1240px !important; margin: 0 auto !important; padding: 28px 24px 16px !important; }
+footer { display: none !important; }
+
+/* Header */
+#app-header { margin-bottom: 18px; }
+#app-header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; color: var(--hd-ink); }
+#app-header p { font-size: 15px; color: var(--hd-muted); margin: 0; max-width: 70ch; }
+
+/* Main row: both columns start at the same top edge */
+#main-row { align-items: stretch; gap: 20px; }
+
+/* Chat column */
+#chat-col { gap: 10px; }
+#chatbot { border-radius: 10px; }
+#chatbot hr { margin: 10px 0 !important; }
+#chatbot .placeholder-content, #chatbot .placeholder { color: var(--hd-muted); }
+#composer { border-radius: 10px; }
+#composer textarea { font-size: 15px; }
+
+/* Sidebar */
+#side-col { gap: 14px; }
+.side-card { background: var(--hd-surface); border: 1px solid var(--hd-border); border-radius: 10px; padding: 16px 18px; }
+.side-card h3 { font-size: 14px; font-weight: 600; color: var(--hd-ink); margin: 0 0 12px; }
+.capability { border-left: 3px solid var(--cap); padding: 2px 0 2px 12px; margin-bottom: 14px; }
+.capability:last-child { margin-bottom: 0; }
+.capability strong { display: block; font-size: 14px; font-weight: 600; color: var(--hd-ink); }
+.capability span { display: block; font-size: 13px; color: var(--hd-muted); line-height: 1.45; margin-top: 2px; }
+.cap-support { --cap: var(--cap-support); }
+.cap-error   { --cap: var(--cap-error); }
+.cap-change  { --cap: var(--cap-change); }
+.checks { margin: 0; padding-left: 18px; list-style: disc; font-size: 13px; color: var(--hd-body); line-height: 1.6; }
+#session-box { border-radius: 10px; }
+#clear-btn { width: 100%; border: 1px solid var(--hd-control-border); font-weight: 500; font-size: 14px; }
+#side-col > * { margin: 0 !important; }
+
+/* Strip Gradio's wrapper chrome from raw HTML blocks */
+.bare { padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; }
+
+/* Suggestions: one tidy row under the composer */
+#suggestions { gap: 8px; flex-wrap: wrap; }
+#suggestions .suggestion { flex: 0 0 auto !important; min-width: 0 !important; width: auto !important;
+  font-weight: 400; font-size: 13px; color: var(--hd-body); border-radius: 999px; padding: 6px 14px; }
+#suggestions .suggestion:hover { border-color: var(--hd-accent); color: var(--hd-accent); }
+
+/* Stack the columns on narrow screens */
+@media (max-width: 860px) {
+  .gradio-container { padding: 16px 12px 12px !important; }
+  #main-row { flex-direction: column; }
+  #side-col { min-width: 100% !important; }
+}
+"""
+
+HEADER_HTML = """
+<div id="app-header">
+  <h1>ERP Helpdesk</h1>
+  <p>Ask how to do something in the ERP, report an error with a screenshot, or request a change such as new user access.</p>
+</div>
+"""
+
+CAPABILITIES_HTML = """
+<div class="side-card">
+  <h3>What I can help with</h3>
+  <div class="capability cap-support">
+    <strong>How-to questions</strong>
+    <span>Step-by-step answers from the ERP guides, with sources.</span>
+  </div>
+  <div class="capability cap-error">
+    <strong>Error reports</strong>
+    <span>Attach a screenshot and I'll open a ticket with a severity rating.</span>
+  </div>
+  <div class="capability cap-change">
+    <strong>Change requests</strong>
+    <span>New users, module access, cost codes and warehouses, drafted for approval.</span>
+  </div>
+</div>
+"""
+
+CHECKS_HTML = """
+<div class="side-card">
+  <h3>How replies are checked</h3>
+  <ul class="checks">
+    <li>Each request goes to a specialist agent</li>
+    <li>A validator reviews every reply</li>
+    <li>Points to double-check are listed at the end</li>
+    <li>Changes are drafted, never applied automatically</li>
+  </ul>
+</div>
+"""
+
+EMPTY_STATE = (
+    "**How can I help today?**\n\n"
+    "Describe your question or problem below. "
+    "Use the paperclip to attach a screenshot of an error."
+)
+
+
+SAMPLE_SCREENSHOT = os.path.join(EXAMPLES_DIR, "Odoo_error.png")
+
+# (button label, composer value)
+SUGGESTIONS = [
+    ("How do I create a purchase order?",
+     {"text": "How do I create a purchase order?", "files": []}),
+    ("Report a sample invoice error",
+     {"text": "I got this error when saving an invoice",
+      "files": [SAMPLE_SCREENSHOT] if os.path.exists(SAMPLE_SCREENSHOT) else []}),
+    ("Give jsmith Inventory access",
+     {"text": "Give user jsmith access to the Inventory module", "files": []}),
+]
+
+
 def create_ui():
-    # ✅ FIX: Use the new chatbot format with type='messages'
-    with gr.Blocks(title="ERP Helpdesk Agentic AI") as demo:
-        gr.Markdown("""
-        # 🏢 ERP Helpdesk Agentic AI
-        
-        **I can help with:**
-        - 📚 **Support:** How-to questions and ERP guidance
-        - 🐛 **Error Reports:** File tickets for system issues (upload screenshots!)
-        - 📊 **Data Change Request:** Add permission to users, create new cost codes, create new warehouse.
-        
-        **📷 NEW:** Upload screenshots of errors or UI issues for better assistance!
-        
-        *Every response includes a "Devil's Advocate" double-check for reliability.*
-        """)
-        
-        with gr.Row():
-            with gr.Column(scale=4):
-                # ✅ FIX: Use type='messages' for the new format
+    with gr.Blocks(title="ERP Helpdesk", theme=THEME, css=CSS) as demo:
+        pending = gr.State(None)
+
+        gr.HTML(HEADER_HTML, elem_classes="bare", padding=False)
+
+        with gr.Row(elem_id="main-row", equal_height=False):
+            # ── Conversation ─────────────────────────────────
+            with gr.Column(scale=3, elem_id="chat-col"):
                 chatbot = gr.Chatbot(
-                    label="Conversation",
-                    height=500,
-                    type='messages'  # Use openai-style dict format
+                    elem_id="chatbot",
+                    type="messages",
+                    height=600,
+                    show_label=False,
+                    placeholder=EMPTY_STATE,
+                    show_copy_button=True,
                 )
-            with gr.Column(scale=1):
-                gr.Markdown("### 🛡️ Trust Features")
-                gr.Markdown("- ✅ Response validated by Agent 5")
-                gr.Markdown("- 🔍 Double-Check (Devil's Advocate)")
-                gr.Markdown("- 💰 Cost-budgeted (max $0.10/request)")
-                gr.Markdown("- ⏱️ Timeout: 30 seconds")
-                gr.Markdown("- 📷 **Vision-enabled**")
-                
-                gr.Markdown("### 📊 Session Info")
-                user_id_input = gr.Textbox(
-                    label="User ID",
-                    value="user_001",
-                    visible=True
+                composer = gr.MultimodalTextbox(
+                    elem_id="composer",
+                    show_label=False,
+                    placeholder="Ask a question or describe an error…",
+                    file_types=["image"],
+                    file_count="single",
+                    sources=["upload"],
+                    submit_btn=True,
+                    autofocus=True,
                 )
-        
-        with gr.Row():
-            with gr.Column(scale=8):
-                msg_input = gr.Textbox(
-                    label="Type your message...",
-                    placeholder="e.g., 'How do I add a purchase order line?' or 'Check stock for item Cement'",
-                    lines=2
-                )
-            with gr.Column(scale=2):
-                image_input = gr.File(
-                    label="📷 Upload Screenshot",
-                    file_types=[".png", ".jpg", ".jpeg", ".gif", ".bmp"],
-                    type="binary"
-                )
-        
-        with gr.Row():
-            send_btn = gr.Button("Send", variant="primary", scale=1)
-            clear_image = gr.Button("Clear Image", variant="secondary", scale=1)
-        
-        # ✅ FIX: Use list of messages with role/content format
-        state = gr.State([])
-        
-        def clear_image_input():
-            return None
-        
-        clear_image.click(clear_image_input, outputs=[image_input])
-        
-        def respond(message, image, history, user_id):
-            if not message.strip() and image is None:
-                # ✅ FIX: Use messages format
-                history.append({"role": "assistant", "content": "⚠️ Please provide a message or screenshot"})
-                return history, "", None
-            
-            # Add user message
-            user_content = message if message else "[Image uploaded]"
-            history.append({"role": "user", "content": user_content})
-            
-            # Get response
-            response = process_message_with_image(message, image, user_id)
-            
-            # Add assistant message
-            history.append({"role": "assistant", "content": response})
-            return history, "", None
-        
-        send_btn.click(
-            respond,
-            inputs=[msg_input, image_input, state, user_id_input],
-            outputs=[chatbot, msg_input, image_input]
+                with gr.Row(elem_id="suggestions"):
+                    suggestion_btns = [
+                        gr.Button(label, size="sm", variant="secondary", elem_classes="suggestion")
+                        for label, _ in SUGGESTIONS
+                    ]
+
+            # ── Sidebar ──────────────────────────────────────
+            with gr.Column(scale=1, min_width=280, elem_id="side-col"):
+                gr.HTML(CAPABILITIES_HTML, elem_classes="bare", padding=False)
+                gr.HTML(CHECKS_HTML, elem_classes="bare", padding=False)
+                with gr.Group(elem_id="session-box"):
+                    user_id_input = gr.Textbox(
+                        label="User ID",
+                        value="user_001",
+                        max_lines=1,
+                    )
+                clear_btn = gr.Button("Clear conversation", variant="secondary", size="sm", elem_id="clear-btn")
+
+        # ── Events ───────────────────────────────────────────
+        def add_user_turn(message, history):
+            """Show the user's message straight away and lock the composer."""
+            history = history or []
+            text = (message or {}).get("text", "").strip()
+            files = (message or {}).get("files", [])
+
+            if not text and not files:
+                return history, gr.MultimodalTextbox(value=None), None
+
+            if files:
+                history.append({"role": "user", "content": {"path": files[0]}})
+            if text:
+                history.append({"role": "user", "content": text})
+
+            return history, gr.MultimodalTextbox(value=None, interactive=False), {"text": text, "files": files}
+
+        def bot_turn(message, history, user_id):
+            """Run the agents and append the reply."""
+            if message is None:
+                return history, gr.MultimodalTextbox(interactive=True)
+
+            image_bytes = None
+            if message["files"]:
+                with open(message["files"][0], "rb") as f:
+                    image_bytes = f.read()
+
+            reply = process_message_with_image(message["text"], image_bytes, user_id or "anonymous")
+            history.append({"role": "assistant", "content": reply})
+            return history, gr.MultimodalTextbox(interactive=True)
+
+        composer.submit(
+            add_user_turn,
+            inputs=[composer, chatbot],
+            outputs=[chatbot, composer, pending],
+        ).then(
+            bot_turn,
+            inputs=[pending, chatbot, user_id_input],
+            outputs=[chatbot, composer],
         )
-        
-        msg_input.submit(
-            respond,
-            inputs=[msg_input, image_input, state, user_id_input],
-            outputs=[chatbot, msg_input, image_input]
-        )
-        
-        # ✅ FIX: Clear button using a function instead of ClearButton
-        def clear_history():
-            return [], "", None
-        
-        clear_btn = gr.Button("Clear Conversation", variant="secondary")
+
+        for btn, (_, value) in zip(suggestion_btns, SUGGESTIONS):
+            btn.click(lambda v=value: gr.MultimodalTextbox(value=v), outputs=[composer])
+
+        def clear_conversation(user_id):
+            sessions.pop(user_id, None)
+            return [], gr.MultimodalTextbox(value=None, interactive=True), None
+
         clear_btn.click(
-            clear_history,
-            inputs=[],
-            outputs=[chatbot, msg_input, image_input]
+            clear_conversation,
+            inputs=[user_id_input],
+            outputs=[chatbot, composer, pending],
         )
-    
+
     return demo
 
 def main():
