@@ -64,13 +64,13 @@ class RouterAgent(BaseAgent):
         content = f"User Message: {user_message}\n\nImage Analysis (if available): {image_analysis or 'No image provided'}"
         
         def _classify():
-            response = self.vision_llm.invoke([
+            response = self.llm.invoke([
                 SystemMessage(content=system_prompt),
                 HumanMessage(content=content)
             ])
             # Simple JSON parsing with fallback
             try:
-                return json.loads(response.content)
+                return self.parse_json(response.content)
             except json.JSONDecodeError:
                 # If JSON parsing fails, return a default
                 logger.warning(f"Failed to parse JSON, using default. Response: {response.content[:200]}")
@@ -106,7 +106,7 @@ class RouterAgent(BaseAgent):
         return {
             "status": "success",
             "category": result["category"],
-            "confidence": result["confidence"],
+            "confidence": result.get("confidence", 0.5),
             "original_message": user_message,
             "user_id": user_id,
             "image": image_data,

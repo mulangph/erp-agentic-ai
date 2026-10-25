@@ -3,6 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Project root (two levels above src/erp_helpdesk/)
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 class Config:
     # OpenAI
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
@@ -20,6 +23,9 @@ class Config:
     
     # Vector Store
     chroma_persist_dir: str = os.getenv("CHROMA_PERSIST_DIR", "./vector_store")
+
+    # RAG source documents (flat folder of .md files)
+    docs_dir: str = os.getenv("DOCS_DIR", os.path.join(ROOT_DIR, "rag_data"))
     
     # Simple limits
     max_retries: int = 2

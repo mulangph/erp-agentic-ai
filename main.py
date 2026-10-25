@@ -475,10 +475,11 @@ def create_ui():
 
 def main():
     demo = create_ui()
-    logger.info("🚀 Starting Gradio UI on http://localhost:7860")
+    port = int(os.getenv("PORT", "7860"))
+    logger.info(f"🚀 Starting Gradio UI on http://localhost:{port}")
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=port,
         share=False
     )
 

@@ -45,11 +45,10 @@ class RAGAgent(BaseAgent):
             except:
                 pass
             
-            # NOTE: assumes config.docs_dir points to a flat folder of .md files, e.g.:
-            #   erp/rag_data/purchase-orders.md
-            #   erp/rag_data/stock-management.md
-            # Adjust config.docs_dir if your project uses a different location.
-            docs_dir = getattr(config, "docs_dir", "erp/rag_data")
+            # config.docs_dir points to a flat folder of .md files, e.g.:
+            #   rag_data/purchase-orders.md
+            #   rag_data/stock-management.md
+            docs_dir = config.docs_dir
             md_files = glob.glob(os.path.join(docs_dir, "*.md"))
             
             if not md_files:
@@ -81,8 +80,8 @@ class RAGAgent(BaseAgent):
                         }
                     ))
             
+            # langchain_chroma persists automatically when persist_directory is set
             self.vector_store.add_documents(documents)
-            self.vector_store.persist()
             logger.info(f"Vector store seeded with {len(documents)} chunks from {len(md_files)} markdown files")
             
         except Exception as e:
@@ -181,7 +180,7 @@ class RAGAgent(BaseAgent):
             ])
             
             try:
-                return json.loads(response.content)
+                return self.parse_json(response.content)
             except json.JSONDecodeError:
                 logger.warning(f"Failed to parse JSON, using default. Response: {response.content[:200]}")
                 return {

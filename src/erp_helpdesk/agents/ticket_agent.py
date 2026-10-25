@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Dict, Any, Optional
 from datetime import datetime
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -28,8 +29,10 @@ class TicketAgent(BaseAgent):
     def _determine_severity(self, message: str, screenshot_analysis: Dict = None) -> int:
         """Enhanced severity detection with visual context."""
         severity_keywords = {
-            1: ["crash", "down", "not working", "error", "failed", "critical", "urgent", "emergency"],
-            2: ["broken", "issue", "problem", "wrong", "incorrect"],
+            # "error"/"failed" appear in nearly every error report, so they
+            # rate as 2; severity 1 is reserved for outages and urgent cases.
+            1: ["crash", "down", "not working", "critical", "urgent", "emergency"],
+            2: ["error", "failed", "broken", "issue", "problem", "wrong", "incorrect"],
             3: ["slow", "delay", "stuck", "timeout"],
             4: ["question", "how to", "where", "guide"],
             5: ["suggestion", "request", "feature", "enhancement"],
@@ -47,7 +50,8 @@ class TicketAgent(BaseAgent):
                 combined_text += " " + screenshot_analysis["error_code"].lower()
         
         for severity, keywords in severity_keywords.items():
-            if any(keyword in combined_text for keyword in keywords):
+            # Whole words only, so "down" doesn't match "dropdown"
+            if any(re.search(rf"\b{re.escape(keyword)}\b", combined_text) for keyword in keywords):
                 return severity
         
         # Check for visual indicators of severity
@@ -101,7 +105,7 @@ class TicketAgent(BaseAgent):
             response = self.vision_llm.invoke([HumanMessage(content=content)])
             
             try:
-                result = json.loads(response.content)
+                result = self.parse_json(response.content)
                 logger.info(f"✅ Screenshot analysis successful: {result}")
                 return result
             except json.JSONDecodeError:
